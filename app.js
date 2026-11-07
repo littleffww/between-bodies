@@ -1,12 +1,12 @@
-import {CameraTracking,drawSkeleton,interpretHands,recognizePhoto} from './tracking.mjs?v=export-v17';
-import {selectSubject,autoCrop,projectSubject,frameworkCanvas,drawCameraGuide,drawLines,reliable} from './capture-guide.mjs?v=export-v17';
-import {createBody} from './body.mjs?v=export-v17';
-import {FleshSound} from './sound.mjs?v=export-v17';
-import {createFaceRelief} from './face-relief.mjs?v=export-v17';
-import {ParticipantVoices} from './participant-voices.mjs?v=export-v17';
-import {MAX_PARTICIPANTS} from './face-layout.mjs?v=export-v17';
-import {waitForCameraFrame} from './camera-preview.mjs?v=export-v17';
-import {SculptureRecorder,saveVideo,downloadBlob} from './video-recorder.mjs?v=export-v17';
+import {CameraTracking,drawSkeleton,interpretHands,recognizePhoto} from './tracking.mjs?v=alpha-v18';
+import {selectSubject,autoCrop,projectSubject,frameworkCanvas,drawCameraGuide,drawLines,reliable} from './capture-guide.mjs?v=alpha-v18';
+import {createBody} from './body.mjs?v=alpha-v18';
+import {FleshSound} from './sound.mjs?v=alpha-v18';
+import {createFaceRelief} from './face-relief.mjs?v=alpha-v18';
+import {ParticipantVoices} from './participant-voices.mjs?v=alpha-v18';
+import {MAX_PARTICIPANTS} from './face-layout.mjs?v=alpha-v18';
+import {waitForCameraFrame} from './camera-preview.mjs?v=alpha-v18';
+import {SculptureRecorder,saveVideo,downloadBlob} from './video-recorder.mjs?v=alpha-v18';
 const $=id=>document.getElementById(id);
 const sound=new FleshSound(),voices=new ParticipantVoices(),participants=new Map();
 let nextParticipant=1;
@@ -28,7 +28,7 @@ async function startVoice(){
 document.addEventListener('pointerdown',e=>{if(e.target.closest('#stage canvas,[data-state],#press,#join,#replayFusion')&&audioIntent!=='muted')startVoice()},true);
 
 body=createBody($('stage'),()=>report('轻触它，看它回应。'),message=>report(message,true));
-const videoRecorder=new SculptureRecorder(body?.canvas,()=>[sound.getOutputStream(),voices.getOutputStream()]);
+const videoRecorder=new SculptureRecorder(body?.canvas,()=>[sound.getOutputStream(),voices.getOutputStream()],(...args)=>body.copyTransparentFrame(...args));
 let previewURL=null,previewBlob=null;
 let latestPose=null,latestGesture=null,keepTracking=false;
 const tracker=new CameraTracking($('trackingVideo'),{
@@ -270,7 +270,8 @@ $('save').onclick=savePNG;$('saveMobile').onclick=savePNG;
 function syncVideo(){
  const active=videoRecorder.active,processing=videoRecorder.state==='processing',starting=videoRecorder.state==='starting';
  $('recordVideo').disabled=active||processing||starting;
- $('recordVideo').textContent=processing?'正在生成 MP4…':starting?'正在准备录制…':'录制视频';
+ $('recordingBackground').disabled=active||processing||starting;
+ $('recordVideo').textContent=processing?(videoRecorder.transparent?'正在生成透明视频…':'正在生成 MP4…'):starting?'正在准备录制…':'录制视频';
  $('recordingToolbar').hidden=!active;
  $('videoPause').textContent=videoRecorder.state==='paused'?'继续录制':'暂停录制';
  $('videoPause').setAttribute('aria-pressed',String(videoRecorder.state==='paused'));
@@ -279,21 +280,26 @@ function syncVideo(){
  $('videoState').textContent=videoRecorder.state==='paused'?'录制已暂停':'录制中';
  if(videoRecorder.state==='ready'&&videoRecorder.blob!==previewBlob){
   previewBlob=videoRecorder.blob;if(previewURL)URL.revokeObjectURL(previewURL);previewURL=URL.createObjectURL(previewBlob);
+  const transparent=previewBlob.type.startsWith('video/webm');
+  $('recordedVideo').dataset.transparent=String(transparent);$('videoSave').textContent=transparent?'保存透明 WebM':'保存 MP4';
+  $('videoFormatHint').textContent=transparent?'棋盘格仅用于预览，导出的视频为透明背景。':'MP4 · 保留场景背景';
   $('recordedVideo').src=previewURL;openDialog($('videoPreview'));syncSound();
  }
 }
+$('recordingBackground').onchange=()=>{$('recordingFormat').textContent=$('recordingBackground').value==='transparent'?'WebM · 保留透明通道':'MP4 · 保留场景背景'};
 videoRecorder.onchange=syncVideo;
 videoRecorder.onerror=e=>report(e.message||'录制失败，请重试。',true);
 $('recordVideo').onclick=async()=>{
- try{if(audioIntent!=='muted')startVoice();await videoRecorder.start()}catch(e){report(e.message||'录制失败，请重试。',true)}
+ try{if(audioIntent!=='muted')startVoice();await videoRecorder.start({transparent:$('recordingBackground').value==='transparent'})}catch(e){report(e.message||'录制失败，请重试。',true)}
 };
 $('videoPause').onclick=()=>{if(videoRecorder.state==='paused')videoRecorder.resume().catch(e=>report(e.message));else videoRecorder.pause()};
 $('videoFinish').onclick=()=>videoRecorder.finish()?.catch(()=>{});
 $('videoSave').onclick=async()=>{
  if(!previewBlob)return;
  $('videoSave').disabled=true;
- try{const result=await saveVideo(previewBlob,'Between-Bodies-'+new Date().toISOString().replace(/[:.]/g,'-')+'.mp4');if(result==='saved')report('MP4 已保存。');else if(result==='downloaded')report('MP4 已交给浏览器下载。')}
- catch{report('保存失败，可再次点击保存 MP4。',true)}finally{$('videoSave').disabled=false}
+ const transparent=previewBlob.type.startsWith('video/webm');
+ try{const result=await saveVideo(previewBlob,'Between-Bodies-'+new Date().toISOString().replace(/[:.]/g,'-')+(transparent?'.webm':'.mp4'));if(result==='saved')report(transparent?'透明视频已保存。':'MP4 已保存。');else if(result==='downloaded')report(transparent?'透明视频已交给浏览器下载。':'MP4 已交给浏览器下载。')}
+ catch{report('保存失败，请再次点击保存。',true)}finally{$('videoSave').disabled=false}
 };
 $('fullscreen').onclick=async()=>{try{document.fullscreenElement?await document.exitFullscreen():await document.documentElement.requestFullscreen()}catch{report('这个浏览器暂不支持全屏。')}};
 document.addEventListener('visibilitychange',()=>{
@@ -305,4 +311,4 @@ addEventListener('pageshow',()=>{pageClosing=false});
 
 $('nightView').onclick=()=>{const night=document.documentElement.dataset.view!=='night';document.documentElement.dataset.view=night?'night':'day';$('nightView').setAttribute('aria-pressed',String(night));body?.setNight(night)};
 
-import "./language.mjs?v=export-v17";
+import "./language.mjs?v=alpha-v18";

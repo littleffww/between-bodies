@@ -1,5 +1,5 @@
 import {captureRows} from './capture-language.mjs?v=relief-v11';
-import {exportRows} from './export-language.mjs?v=export-v17';
+import {exportRows} from './export-language.mjs?v=alpha-v18';
 import {chorusRows} from './chorus-language.mjs?v=feature-fit-v16';
 import {reliefRows} from './relief-language.mjs?v=relief-v11';
 import {fusionRows} from './fusion-language.mjs?v=relief-v11';

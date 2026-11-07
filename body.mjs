@@ -377,6 +377,15 @@ export function createBody(host, onReady, onError) {
   renderer.render(scene,camera);
  }
  requestAnimationFrame(animate);
+ function copyTransparentFrame(context,x=0,y=0,width=context.canvas.width,height=context.canvas.height){
+  const background=scene.background,fog=scene.fog,groundVisible=floor.visible,bridgeVisible=bridges.visible,alpha=renderer.getClearAlpha();
+  try{
+   scene.background=null;scene.fog=null;floor.visible=false;bridges.visible=false;renderer.setClearAlpha(0);renderer.render(scene,camera);
+   context.clearRect(0,0,context.canvas.width,context.canvas.height);context.drawImage(dom,x,y,width,height);
+  }finally{
+   scene.background=background;scene.fog=fog;floor.visible=groundVisible;bridges.visible=bridgeVisible;renderer.setClearAlpha(alpha);renderer.render(scene,camera);
+  }
+ }
  return {
   get paused(){return paused},
   setSplit(value){split=value},
@@ -423,14 +432,11 @@ export function createBody(host, onReady, onError) {
   clearPhoto(){clearFaces();frameTexture?.dispose();frameTexture=null;uniforms.hasFramework.value=0;uniforms.framework.value=skin;photoHalf.visible=false;uniforms.halfSide.value=0;uniforms.separation.value=0;fusionTime=7.2;photoBlend=0;uniforms.hasPhoto.value=0;uniforms.photo.value=skin;photoTexture?.dispose();photoTexture=null},
   reset(){Object.assign(targets,{breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:1,bruise:3,sweat:1});rotateX=0;rotateY=-.08;gestureKind=null;twoDistance=null;paused=false},
   capture(){
-   // Render only the sculpture with its existing studio light, then restore the stage
-   // synchronously so recording and the next on-screen frame keep their background.
-   const background=scene.background,fog=scene.fog,groundVisible=floor.visible,bridgeVisible=bridges.visible,alpha=renderer.getClearAlpha();
    const copy=document.createElement('canvas');copy.width=dom.width;copy.height=dom.height;
-   try{scene.background=null;scene.fog=null;floor.visible=false;bridges.visible=false;renderer.setClearAlpha(0);renderer.render(scene,camera);copy.getContext('2d').drawImage(dom,0,0)}
-   finally{scene.background=background;scene.fog=fog;floor.visible=groundVisible;bridges.visible=bridgeVisible;renderer.setClearAlpha(alpha);renderer.render(scene,camera)}
+   copyTransparentFrame(copy.getContext('2d'));
    return new Promise((resolve,reject)=>copy.toBlob(blob=>blob?resolve(blob):reject(Error('画面保存失败，请重试。')),'image/png'));
   },
+  copyTransparentFrame,
   get canvas(){return dom},
   onTick(callback){tick=callback},
   dispose(){dead=true;removeEventListener('resize',resize);geometry.dispose();material.dispose();depth.dispose();photoDepth.dispose();frameTexture?.dispose();photoTexture?.dispose();reliefTexture?.dispose();emptyRelief.dispose();skin.dispose();surfaceMaps.forEach(texture=>texture.dispose());environment.dispose();scene.traverse(o=>{if(o!==body){o.geometry?.dispose();o.material?.dispose()}});renderer.dispose();dom.remove()}
