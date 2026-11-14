@@ -1,0 +1,23 @@
+export const trackingRows=[
+['实时姿态骨架','即時姿態骨架','リアルタイムの姿勢ライン','Live pose skeleton'],['实时骨架 · 仅关节点','即時骨架 · 僅關節點','姿勢ライン · 関節点のみ','Live pose · joints only'],['身体关节点与连线','身體關節點與連線','身体の関節点と線','Body joints and connections'],
+['让肩膀和手臂进入画面','讓肩膀和手臂進入畫面','肩と腕を画面に入れてください','Bring your shoulders and arms into view'],['开启摄像头，查看实时骨架','開啟攝影機，查看即時骨架','カメラをオンにして姿勢を見る','Enable the camera to see your live pose'],
+['开启手势与骨架','開啟手勢與骨架','ジェスチャーと姿勢を開始','Enable gestures & pose'],['关闭摄像头','關閉攝影機','カメラを停止','Stop camera'],['取消开启','取消開啟','起動をキャンセル','Cancel'],['手势控制形体','手勢控制形體','ジェスチャーで形を変える','Control shape with gestures'],
+['手势怎么玩','手勢怎麼玩','ジェスチャーの使い方','Gesture guide'],['张开手掌移动可旋转，握拳蜷缩，捏合轻压；双手拉开或靠近可伸缩。看全身骨架时请后退一步。','張開手掌移動可旋轉，握拳蜷縮，捏合輕壓；雙手拉開或靠近可伸縮。看全身骨架時請後退一步。','開いた手を動かすと回転、拳で縮め、つまむと押せます。両手の間隔で伸縮。全身を見るには一歩下がってください。','Move an open hand to rotate, make a fist to curl, or pinch to press. Move both hands apart or together to stretch or shrink. Step back to show your full pose.'],
+['法线强度','法線強度','凹凸の強さ','Normal strength'],['实拍保留原纹理，不叠加皮肤或体毛。','實拍保留原紋理，不疊加皮膚或體毛。','写真には元の質感を残し、肌や体毛を重ねません。','Photos keep their own texture; no added skin or hair.'],
+['真实照片','真實照片','実際の写真','Actual photograph'],['保留衣服与遮挡','保留衣服與遮擋','服や遮られた部分をそのままに','Clothing and occlusion preserved'],
+['左侧留下真实的画面，右侧让动作成为骨架线条。','左側留下真實的畫面，右側讓動作成為骨架線條。','左には実際の写真を、右には動きを線で残す。','Your real image on the left. Your movement as lines on the right.'],
+['拖动旋转，轻触施压。开启摄像头，可用手势改变形体。','拖動旋轉，輕觸施壓。開啟攝影機，可用手勢改變形體。','ドラッグで回転、タップで押す。カメラをオンにすると手でも形を変えられます。','Drag to rotate, tap to press. Enable the camera to reshape it with your hands.'],
+['留下真实的一刻。','留下真實的一刻。','そのままの瞬間を。','Capture a real moment.'],
+['拍摄画面会原样保留衣服和遮挡。拍完后，镜头继续用于手势与实时骨架。','拍攝畫面會原樣保留衣服和遮擋。拍完後，鏡頭繼續用於手勢與即時骨架。','服や遮られた部分は写真のまま残ります。撮影後もカメラはジェスチャーと姿勢の検出に使われます。','Clothing and occlusion stay as photographed. After capture, the camera continues tracking gestures and your pose.'],
+['拖动选择范围，照片会完整映射到左侧抽象形体。','拖動選擇範圍，照片會完整映射到左側抽象形體。','範囲をドラッグして選ぶと、写真を左の抽象的な形に貼り付けます。','Drag to select an area. The photograph will cover the abstract form on the left.'],
+['使用这张真实照片','使用這張真實照片','この写真を使う','Use this photograph'],
+['照片和姿态在当前页面处理，不会上传。','照片和姿態在目前頁面處理，不會上傳。','写真と姿勢はこのページ内で処理され、送信されません。','Photos and poses are processed here and never uploaded.'],
+['未拍照时展示预先生成的皮肤材质。拍照后，左侧形体只使用真实照片，衣服和遮挡原样保留，不生成衣服下的身体。右侧仅显示实时估计的关节点和连线，不是解剖骨骼，也不重建身体表面。','未拍照時展示預先生成的皮膚材質。拍照後，左側形體只使用真實照片，衣服和遮擋原樣保留，不生成衣服下的身體。右側僅顯示即時估計的關節點和連線，不是解剖骨骼，也不重建身體表面。','撮影前は事前生成した肌素材を表示します。撮影後の左の形には実際の写真だけを使い、服や遮られた部分を変えず、服の下の身体は生成しません。右は推定した関節点と線だけで、解剖学的な骨格や身体表面の再現ではありません。','Before capture, the artwork uses a pre-generated skin material. After capture, the left form uses only your actual photo, preserving clothing and occlusion without generating the body underneath. The right shows estimated joints and connections, not anatomical bones or a reconstructed body surface.'],
+['法线强度可以调整生成皮肤的凹凸，细毛会随动作惯性回摆。张开手掌、握拳、捏合或移动双手可控制形体。摄像头可随时关闭，照片和姿态只在当前设备处理。','法線強度可以調整生成皮膚的凹凸，細毛會隨動作慣性回擺。張開手掌、握拳、捏合或移動雙手可控制形體。攝影機可隨時關閉，照片和姿態只在目前裝置處理。','凹凸の強さで生成した肌の起伏を調整できます。細い毛は動きの慣性で揺れ戻ります。開いた手、拳、つまむ動作、両手の動きで形を変えられます。カメラはいつでも停止でき、写真と姿勢は端末内で処理されます。','Adjust the generated skin relief with normal strength. Fine hairs sway and settle with inertia. Open hands, fists, pinches, and two-hand movement control the form. Stop the camera at any time; photos and poses are processed on your device.'],
+['等待摄像头权限…','等待攝影機權限…','カメラの許可を待っています…','Waiting for camera permission…'],['正在加载手势与姿态识别…','正在載入手勢與姿態識別…','ジェスチャーと姿勢の認識を読み込み中…','Loading gesture and pose tracking…'],['摄像头已开启 · 本机识别','攝影機已開啟 · 本機識別','カメラ使用中 · 端末内で認識','Camera on · local tracking'],
+['张开手掌 · 旋转','張開手掌 · 旋轉','開いた手 · 回転','Open hand · rotate'],['握拳 · 蜷缩','握拳 · 蜷縮','拳 · 縮む','Fist · curl'],['捏合 · 轻压','捏合 · 輕壓','つまむ · 押す','Pinch · press'],['双手 · 伸缩','雙手 · 伸縮','両手 · 伸縮','Two hands · stretch'],
+['左侧 · 真实照片　／　右侧 · 实时姿态线','左側 · 真實照片　／　右側 · 即時姿態線','左 · 実際の写真 ／ 右 · リアルタイムの姿勢','Left · actual photo / Right · live pose'],
+['保留实际拍到的你。衣服、遮挡和你的选择，都留在画面里。','保留實際拍到的你。衣服、遮擋和你的選擇，都留在畫面裡。','写ったあなたをそのままに。服も遮られた部分も、あなたの選択も残します。','Keep what was actually photographed: your clothing, occlusion, and choices.'],
+['已使用真实照片，未生成衣服下的身体。','已使用真實照片，未生成衣服下的身體。','実際の写真を使っています。服の下の身体は生成しません。','Actual photo applied. No body beneath clothing was generated.'],
+['摄像头已断开，请重新开启。','攝影機已中斷，請重新開啟。','カメラが切断されました。再度起動してください。','Camera disconnected. Please enable it again.'],['此浏览器暂不支持姿态识别，仍可拍照和使用鼠标。','此瀏覽器暫不支援姿態識別，仍可拍照和使用滑鼠。','このブラウザーでは姿勢を認識できません。写真とマウスは使えます。','Pose tracking is unavailable in this browser. Camera capture and mouse controls still work.'],['姿态识别暂不可用，仍可拍照和使用鼠标。','姿態識別暫不可用，仍可拍照和使用滑鼠。','姿勢認識を利用できません。写真とマウスは使えます。','Pose tracking is unavailable. Camera capture and mouse controls still work.']
+];

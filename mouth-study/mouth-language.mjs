@@ -1,0 +1,23 @@
+export const mouthRows=[
+ ['唇色','唇色','唇の色','Lip tint'],
+ ['嘴部','嘴部','口元','Mouth'],
+ ['嘴部与声音','嘴部與聲音','口元と声','Mouth & voice'],
+ ['确认嘴部','確認嘴部','口元を確認','Confirm mouth'],
+ ['已提取嘴唇轮廓','已擷取嘴唇輪廓','唇の輪郭を抽出しました','Lip contours captured'],
+ ['已识别嘴部','已辨識嘴部','口元を検出しました','Mouth detected'],
+ ['正对镜头，让完整嘴唇进入画面。','正對鏡頭，讓完整嘴唇進入畫面。','正面を向いて、唇全体を画面に入れてください。','Face the camera with both lips fully visible.'],
+ ['让脸正对镜头，露出完整嘴唇','讓臉正對鏡頭，露出完整嘴唇','正面を向いて唇全体を見せてください','Face the camera and show both lips'],
+ ['没有识别到完整嘴唇，请正对镜头并调整光线后重拍。','沒有辨識到完整嘴唇，請正對鏡頭並調整光線後重拍。','唇全体を認識できませんでした。正面を向いて明るさを調整してください。','Could not read the full lip contour. Face the camera, adjust the lighting and retake.'],
+ ['只取嘴唇轮廓。确认后可给它录音。','只取嘴唇輪廓。確認後可為它錄音。','唇の輪郭だけを使います。確定後に声を録音できます。','Only the lip contour is used. Confirm, then record a voice.'],
+ ['生成大嘴','生成大嘴','大きな口を作る','Sculpt the mouth'],
+ ['替换嘴部','替換嘴部','口元を置き換える','Replace the mouth'],
+ ['转向嘴部','轉向嘴部','口元を正面に','Turn to the mouth'],
+ ['移除嘴部','移除嘴部','口元を消す','Remove the mouth'],
+ ['大嘴已生成。点击录音，让它跟着你的声音动。','大嘴已生成。點擊錄音，讓它跟著你的聲音動。','大きな口ができました。録音すると声に合わせて動きます。','The mouth is ready. Select Record to make it move with your voice.'],
+ ['先移除大嘴，再添加身体照片。','先移除大嘴，再加入身體照片。','身体の写真を加える前に、口元を消してください。','Remove the mouth before adding a body photo.'],
+ ['嘴唇正在浮现','嘴唇正在浮現','唇が浮かび上がる','The lips are emerging'],
+ ['嘴唇成为形体的一部分','嘴唇成為形體的一部分','唇が身体の一部になる','The lips become part of the body'],
+ ['拍照后，嘴唇的轮廓在形体正面长成一张大嘴。','拍照後，嘴唇的輪廓在形體正面長成一張大嘴。','撮影した唇の輪郭が、身体の正面に大きな口として現れます。','After capture, your lip contours grow into one large mouth on the front of the sculpture.'],
+ ['录音时，大嘴随声音实时开合。录音最长 20 秒，结束后自动循环播放。','錄音時，大嘴隨聲音即時開合。錄音最長 20 秒，結束後自動循環播放。','録音中は声に合わせて口が開閉します。最大20秒まで録音し、終了後は繰り返し再生します。','The mouth opens and closes to your voice while you record. Record up to 20 seconds, then hear it loop.'],
+ ['重新拍照可替换这张嘴。照片、轮廓和录音只在当前页面处理，刷新后清除。','重新拍照可替換這張嘴。照片、輪廓和錄音只在目前頁面處理，重新整理後清除。','撮り直すと口元が入れ替わります。写真、輪郭、録音はこのページでのみ処理され、再読み込みで消去されます。','Capture again to replace the mouth. Photos, contours and recordings stay in this page and are cleared on reload.']
+];
