@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- body.mjs loads its bundled textures relative to the preview server root. -->
+<base href="/">
+<title>演示嘴部 · 几何测试</title>
+<style>
+*{box-sizing:border-box}body{margin:0;color:#292621;background:#f4f3ef;font:13px/1.6 system-ui,sans-serif}#stage{position:fixed;inset:0}#stage canvas{display:block;width:100%;height:100%}aside{position:fixed;z-index:2;right:24px;top:24px;width:268px;max-height:calc(100vh - 48px);overflow:auto;padding:20px;background:#fffef8ed;border:1px solid #d6d0c5;border-radius:12px;box-shadow:0 8px 40px #28221a12}h1{font-size:17px;margin:0 0 10px}.note{font-size:11px;color:#675e52;margin:8px 0 16px}.levels{display:grid;grid-template-columns:1fr 1fr;gap:8px}button{padding:9px 8px;border:1px solid #b9b1a5;border-radius:7px;background:#faf8f3;color:#362e25;cursor:pointer;font:inherit}button[aria-pressed=true]{color:#fff;background:#514236;border-color:#514236}.field{display:block;margin-top:18px}.field>span{display:flex;justify-content:space-between;gap:8px}input[type=range]{display:block;width:100%;accent-color:#65513e;margin-top:8px}.check{display:flex;align-items:center;gap:8px;margin-top:18px}output{font-variant-numeric:tabular-nums}#status{min-height:18px;margin:15px 0 0;font-size:11px;color:#655b4e}#status[data-error=true]{color:#a02020}.readout{display:flex;justify-content:space-between;font-size:11px;margin:12px 0 0;color:#655b4e}@media(max-width:700px){aside{right:12px;top:12px;width:232px;padding:14px;font-size:11px;max-height:55vh}h1{font-size:14px}.note{font-size:10px}}
+</style>
+</head>
+<body>
+<main id="stage" aria-label="演示嘴部三维几何"></main>
+<aside aria-label="嘴部与打光测试控制">
+ <h1>演示嘴部 · 几何测试</h1>
+ <p class="note">本页使用合成嘴唇轮廓验证几何、光线和阴影，不包含用户照片，也不播放音频。</p>
+ <div class="levels" aria-label="模拟声音强弱">
+  <button data-level="0" aria-pressed="false">静音（0）</button>
+  <button data-level="0.2" aria-pressed="false">轻声（0.2）</button>
+  <button data-level="0.5" aria-pressed="true">正常（0.5）</button>
+  <button data-level="0.9" aria-pressed="false">大声（0.9）</button>
+ </div>
+ <p class="readout"><span>请求的声音强度</span><output id="requestedLevel">0.5</output></p>
+ <label class="field" for="mouthExpression"><span>嘴部夸张程度 <output id="mouthExpressionValue">2.10</output></span><input id="mouthExpression" type="range" min="0.6" max="2.8" step="0.05" value="2.1"></label>
+ <label class="field" for="lightingContrast"><span>灯光立体感 <output id="lightingContrastValue">1.00</output></span><input id="lightingContrast" type="range" min="0.5" max="1.5" step="0.05" value="1"></label>
+ <label class="check"><input id="night" type="checkbox"> 夜览背景</label>
+ <p class="readout"><span>形体生成进度</span><output id="growth">0%</output></p>
+ <p id="status" role="status">正在加载演示材质…</p>
+</aside>
+<script type="module">
+import {createBody} from '../body.mjs?v=expression-light-v1';
+import {MOUTH_SAMPLES} from '../mouth-profile.mjs';
+
+const $=id=>document.getElementById(id),status=$('status');
+const body=createBody($('stage'),()=>{status.textContent='材质已加载；可切换轻声和大声观察开口。';document.body.dataset.ready='true'},message=>{status.textContent=message;status.dataset.error='true';document.body.dataset.ready='error'});
+if(body){
+ const data=new Uint8Array(MOUTH_SAMPLES*4);
+ for(let i=0;i<MOUTH_SAMPLES;i++){
+  const x=i/(MOUTH_SAMPLES-1)*2-1;
+  data[i*4]=Math.round(128+9*Math.exp(-Math.pow((Math.abs(x)-.24)/.25,2)));
+  data[i*4+1]=128;data[i*4+2]=128;data[i*4+3]=90;
+ }
+ body.setMouth({data});body.setMotion({enabled:false,shakeEnabled:false});body.setFramework(false);body.setSplit(false);
+ for(const [key,value] of Object.entries({movement:0,breath:0,shiver:0,curl:0,stretch:0,mouthExpression:2.1,lightingContrast:1}))body.set(key,value);
+ body.focusMouth();body.setPaused(false);
+ let level=.5;body.setMouthLevel(level);document.body.dataset.level=String(level);
+ for(const button of document.querySelectorAll('[data-level]'))button.onclick=()=>{
+  level=Number(button.dataset.level);body.setMouthLevel(level);$('requestedLevel').textContent=String(level);document.body.dataset.level=String(level);
+  for(const other of document.querySelectorAll('[data-level]'))other.setAttribute('aria-pressed',String(Number(other.dataset.level)===level));
+ };
+ for(const key of ['mouthExpression','lightingContrast'])$(key).oninput=()=>{
+  const value=Number($(key).value);body.set(key,value);$(key+'Value').textContent=value.toFixed(2);document.body.dataset[key]=String(value);
+ };
+ $('night').onchange=()=>body.setNight($('night').checked);
+ body.onTick(state=>{
+  const value=Math.round(Math.min(1,state.fusionProgress)*100)+'%';if($('growth').textContent!==value)$('growth').textContent=value;
+  document.body.dataset.fused=String(!state.fusing);
+ });
+ addEventListener('pagehide',()=>body.dispose(),{once:true});
+}
+</script>
+</body>
+</html>
