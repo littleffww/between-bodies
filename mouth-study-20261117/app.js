@@ -1,6 +1,6 @@
 import {CameraTracking,drawSkeleton,interpretHands,recognizePhoto} from './tracking.mjs?v=alpha-v18';
 import {selectSubject,autoCrop,projectSubject,frameworkCanvas,drawCameraGuide,drawLines,reliable} from './capture-guide.mjs?v=alpha-v18';
-import {createBody,DEFAULT_LIP_TINT} from './body.mjs?v=softbox-touch-v2';
+import {createBody,DEFAULT_LIP_TINT} from './body.mjs?v=drag-defaults-v1';
 import {FleshSound} from './sound.mjs?v=alpha-v18';
 import {createMouthProfile,selectMouth} from './mouth-profile.mjs';
 import {ParticipantVoices} from './participant-voices.mjs?v=audio-import-v1';
@@ -322,7 +322,8 @@ $('press').onclick=()=>{body?.press();report('一次触碰，沿着表面传开�
 $('pause').onclick=()=>{if(!body?.paused&&voices.capture)voices.stopRecording();body?.setPaused(!body.paused);syncPause()};
 $('restore').onclick=()=>{
  $('gestureEnabled').checked=false;body?.reset();syncPause();
- for(const [id,val] of [['motion',.45],['moisture',.65],['volume',1],['normalIntensity',1],['bruiseIntensity',1],['sweatIntensity',1],['lipTint',DEFAULT_LIP_TINT],['mouthExpression',DEFAULT_MOUTH_EXPRESSION],['lightingContrast',.5]]){$(id).value=val;$(id+'Value').textContent=Math.round(val*100)+'%'}
+ $('rotationSpeed').value=5;syncMotionControls();
+ for(const [id,val] of [['motion',.45],['moisture',.65],['volume',1],['normalIntensity',2.5],['bruiseIntensity',1],['sweatIntensity',1],['lipTint',DEFAULT_LIP_TINT],['mouthExpression',DEFAULT_MOUTH_EXPRESSION],['lightingContrast',1]]){$(id).value=val;$(id+'Value').textContent=Math.round(val*100)+'%'}
  document.querySelectorAll('[data-state]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.state==='breathe'));b.classList.toggle('selected',b.dataset.state==='breathe')});
  report('慢慢回到最初的呼吸。');
 };

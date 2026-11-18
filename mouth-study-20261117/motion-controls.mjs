@@ -1,6 +1,6 @@
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export class SculptureMotion{
- constructor(){this.time=0;this.speed=18;this.enabled=true;this.irregular=true;this.shakeEnabled=true;this.strength=1;this.velocity=0;this.shakePhase=0}
+ constructor(){this.time=0;this.speed=5;this.enabled=true;this.irregular=true;this.shakeEnabled=true;this.strength=1;this.velocity=0;this.shakePhase=0}
  configure(values){
   if('speed' in values)this.speed=clamp(Number(values.speed)||0,0,90);
   for(const key of ['enabled','irregular','shakeEnabled'])if(key in values)this[key]=!!values[key];

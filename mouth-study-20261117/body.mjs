@@ -2,7 +2,7 @@ import * as T from './vendor/three.module.js';
 import {MOUTH_SAMPLES} from './mouth-profile.mjs';
 import {mouthSurfaceGLSL} from './mouth-surface.mjs?v=expression-light-v1';
 import {createUpperTeeth} from './mouth-teeth.mjs?v=expression-light-v1';
-import {SculptureMotion} from './motion-controls.mjs?v=motion-pr-v1';
+import {SculptureMotion} from './motion-controls.mjs?v=drag-defaults-v1';
 import {mouthArticulation,DEFAULT_MOUTH_EXPRESSION} from './mouth-expression.mjs?v=expression-light-v1';
 
 export const DEFAULT_LIP_TINT=.5;
@@ -85,7 +85,7 @@ export function createBody(host, onReady, onError) {
  }
  const pmrem=new T.PMREMGenerator(renderer),environment=pmrem.fromScene(studio,.12);
  scene.environment=environment.texture;scene.environmentIntensity=.85;pmrem.dispose();studio.traverse(o=>{o.geometry?.dispose();o.material?.dispose()});
- const parameters={breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:1,bruise:1,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:.5};
+ const parameters={breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:2.5,bruise:1,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:1};
  const targets={...parameters};
  const voiceTarget={high:0,low:0};
  const motionController=new SculptureMotion(),speechMotion={pace:0,activity:0};
@@ -138,9 +138,10 @@ export function createBody(host, onReady, onError) {
    vec3 neutral=mix(ai.rgb,warmDetail,coolPatch);
    ai.rgb=neutral;
    float bruiseCoverage=0.;
+   float irregularity=1.+.14*sin(skinPosition.x*43.+skinPosition.y*31.)*sin(skinPosition.z*37.-skinPosition.y*27.);
    for(int i=0;i<${BRUISE_CAPACITY};i++){
+    if(skinBruises[i].w<.001)continue;
     vec3 delta=skinPosition-skinBruises[i].xyz;
-    float irregularity=1.+.14*sin(skinPosition.x*43.+skinPosition.y*31.)*sin(skinPosition.z*37.-skinPosition.y*27.);
     float bruisePatch=exp(-dot(delta,delta)*62.*irregularity);
     bruiseCoverage+=bruisePatch*skinBruises[i].w;
    }
@@ -281,12 +282,12 @@ export function createBody(host, onReady, onError) {
   if(photoHalf.visible&&point.x>=0)return;
   uniforms.pressPoint.value.copy(point);bruiseAt(point);pressClock=0;desiredPressure=1;
  }
- const dom=renderer.domElement;dom.tabIndex=0;dom.setAttribute('aria-label','拖动旋转肉体，左键轻触皮肤逐渐泛红变紫');
- dom.onpointerdown=e=>{if(!e.isPrimary||e.button!==0)return;pointer={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,id:e.pointerId};moved=false;dom.setPointerCapture(e.pointerId)};
+ const dom=renderer.domElement;dom.style.touchAction='none';dom.style.cursor='grab';dom.tabIndex=0;dom.setAttribute('aria-label','拖动旋转肉体，左键轻触皮肤逐渐泛红变紫');
+ dom.onpointerdown=e=>{if(!e.isPrimary||e.button!==0)return;e.preventDefault();rotateY=group.rotation.y;rotateX=group.rotation.x;dom.style.cursor='grabbing';pointer={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,id:e.pointerId};moved=false;dom.setPointerCapture(e.pointerId)};
  dom.onpointermove=e=>{
   if(pointer?.id!==e.pointerId)return;
   if(e.pointerType==='mouse'&&!(e.buttons&1)){
-   pointer=null;
+   pointer=null;dom.style.cursor='grab';
    if(dom.hasPointerCapture(e.pointerId))dom.releasePointerCapture(e.pointerId);
    return;
   }
@@ -301,9 +302,10 @@ export function createBody(host, onReady, onError) {
  dom.onpointerup=e=>{
   if(pointer?.id!==e.pointerId)return;
   if(!moved&&e.button===0)touch(e.clientX,e.clientY);
-  pointer=null;
+  pointer=null;dom.style.cursor='grab';
+  if(dom.hasPointerCapture(e.pointerId))dom.releasePointerCapture(e.pointerId);
  };
- dom.onpointercancel=dom.onlostpointercapture=e=>{if(pointer?.id===e.pointerId)pointer=null};
+ dom.onpointercancel=dom.onlostpointercapture=e=>{if(pointer?.id===e.pointerId){pointer=null;dom.style.cursor='grab'}};
  dom.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();bruiseAt(uniforms.pressPoint.value);pressClock=0;desiredPressure=1}};
  function resize(){
   const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;
@@ -393,7 +395,7 @@ export function createBody(host, onReady, onError) {
   requestAnimationFrame(animate);
   const dt=last?Math.min(.06,(now-last)/1000):0;last=now;
   if(document.hidden)return;
-  const motion=motionController.update(dt,{paused,...speechMotion});
+  const motion=motionController.update(dt,{paused:paused||!!pointer,...speechMotion});
   if(!paused){time+=dt;pressClock+=dt;rotateY+=motion.rotation;if(photoBlend)fusionTime=Math.min(7.2,fusionTime+dt)}
   if(!paused){uniforms.voiceShake.value=motion.shakeAmount;uniforms.shakePhase.value=motion.shakePhase}
   desiredPressure*=Math.exp(-dt*2.4);pressure+=(desiredPressure-pressure)*(1-Math.exp(-dt*12));
@@ -430,7 +432,8 @@ export function createBody(host, onReady, onError) {
   material.clearcoatNormalScale.setScalar((.20-parameters.wet*.05)*parameters.relief*3);
   material.color.set('#ffffff');hairs.visible=true;
   photoMaterial.color.copy(material.color);photoMaterial.roughness=material.roughness;photoMaterial.clearcoat=material.clearcoat;photoMaterial.clearcoatRoughness=material.clearcoatRoughness;photoMaterial.normalScale.copy(material.normalScale);photoMaterial.clearcoatNormalScale.copy(material.clearcoatNormalScale);
-  if(!paused){group.rotation.y+=(rotateY-group.rotation.y)*(1-Math.exp(-dt*6));group.rotation.x+=(rotateX-group.rotation.x)*(1-Math.exp(-dt*6))}splitAmount+=((split?1:0)-splitAmount)*(1-Math.exp(-dt*4));
+  const rotationEase=1-Math.exp(-dt*(pointer?22:6));
+  group.rotation.y+=(rotateY-group.rotation.y)*rotationEase;group.rotation.x+=(rotateX-group.rotation.x)*rotationEase;splitAmount+=((split?1:0)-splitAmount)*(1-Math.exp(-dt*4));
   camera.position.y+=((mouthMode?restCameraY*.56:restCameraY)-camera.position.y)*(1-Math.exp(-dt*5));
   camera.lookAt(0,.8,0);
   group.position.x=-(innerWidth<700?1.16:1.22)*splitAmount;
@@ -472,7 +475,7 @@ export function createBody(host, onReady, onError) {
   setMotion(values){motionController.configure(values)},
   gesture(input){
    if(!input){gestureKind=null;twoDistance=null;return}
-   if(paused)return;
+   if(paused||pointer)return;
    if(input.kind==='two'){
     if(gestureKind!=='two')twoDistance=Math.max(.1,input.distance);
     const ratio=input.distance/twoDistance;
@@ -503,7 +506,7 @@ export function createBody(host, onReady, onError) {
   setPhoto(canvas,frame=null){clearMouth();const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());photoTexture?.dispose();photoTexture=texture;uniforms.photo.value=texture;uniforms.hasPhoto.value=1;uniforms.joinAmount.value=0;photoBlend=1;frameTexture?.dispose();frameTexture=frame?new T.CanvasTexture(frame):null;if(frameTexture)frameTexture.colorSpace=T.SRGBColorSpace;uniforms.framework.value=frameTexture||skin;uniforms.hasFramework.value=frameTexture?1:0;fusionTime=0;uniforms.halfSide.value=-1;photoHalf.visible=true;paused=false},
   replayFusion(){if(photoBlend){fusionTime=0;paused=false}},
   clearPhoto(){clearMouth();frameTexture?.dispose();frameTexture=null;uniforms.hasFramework.value=0;uniforms.framework.value=skin;photoHalf.visible=false;uniforms.halfSide.value=0;uniforms.separation.value=0;fusionTime=7.2;photoBlend=0;uniforms.hasPhoto.value=0;uniforms.photo.value=skin;photoTexture?.dispose();photoTexture=null},
-  reset(){bruiseTargets.fill(0);Object.assign(targets,{breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:1,bruise:1,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:.5});rotateX=0;rotateY=-.08;gestureKind=null;twoDistance=null;paused=false},
+  reset(){bruiseTargets.fill(0);Object.assign(targets,{breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:2.5,bruise:1,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:1});rotateX=0;rotateY=-.08;gestureKind=null;twoDistance=null;paused=false},
   capture(){
    const copy=document.createElement('canvas');copy.width=dom.width;copy.height=dom.height;
    copyTransparentFrame(copy.getContext('2d'));
