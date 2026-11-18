@@ -2,7 +2,7 @@ import * as T from './vendor/three.module.js';
 import {MOUTH_SAMPLES} from './mouth-profile.mjs';
 import {mouthSurfaceGLSL} from './mouth-surface.mjs?v=expression-light-v1';
 import {createUpperTeeth} from './mouth-teeth.mjs?v=expression-light-v1';
-import {SculptureMotion} from './motion-controls.mjs?v=drag-defaults-v1';
+import {SculptureMotion} from './motion-controls.mjs?v=shake-default-10-v1';
 import {mouthArticulation,DEFAULT_MOUTH_EXPRESSION} from './mouth-expression.mjs?v=expression-light-v1';
 
 export const DEFAULT_LIP_TINT=.5;
