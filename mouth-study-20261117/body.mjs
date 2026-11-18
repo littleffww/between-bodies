@@ -141,8 +141,8 @@ export function createBody(host, onReady, onError) {
    for(int i=0;i<${BRUISE_CAPACITY};i++){
     vec3 delta=skinPosition-skinBruises[i].xyz;
     float irregularity=1.+.14*sin(skinPosition.x*43.+skinPosition.y*31.)*sin(skinPosition.z*37.-skinPosition.y*27.);
-    float patch=exp(-dot(delta,delta)*62.*irregularity);
-    bruiseCoverage+=patch*skinBruises[i].w;
+    float bruisePatch=exp(-dot(delta,delta)*62.*irregularity);
+    bruiseCoverage+=bruisePatch*skinBruises[i].w;
    }
    float bruiseAmount=clamp(bruiseCoverage*skinBruise,0.,1.);
    vec3 bruiseTint=mix(vec3(.84,.52,.49),vec3(.43,.27,.57),smoothstep(.12,.85,bruiseAmount));

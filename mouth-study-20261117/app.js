@@ -1,6 +1,6 @@
 import {CameraTracking,drawSkeleton,interpretHands,recognizePhoto} from './tracking.mjs?v=alpha-v18';
 import {selectSubject,autoCrop,projectSubject,frameworkCanvas,drawCameraGuide,drawLines,reliable} from './capture-guide.mjs?v=alpha-v18';
-import {createBody,DEFAULT_LIP_TINT} from './body.mjs?v=softbox-touch-v1';
+import {createBody,DEFAULT_LIP_TINT} from './body.mjs?v=softbox-touch-v2';
 import {FleshSound} from './sound.mjs?v=alpha-v18';
 import {createMouthProfile,selectMouth} from './mouth-profile.mjs';
 import {ParticipantVoices} from './participant-voices.mjs?v=audio-import-v1';
