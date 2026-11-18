@@ -8,6 +8,8 @@ import {reliefRows} from './relief-language.mjs?v=relief-v11';
 import {fusionRows} from './fusion-language.mjs?v=relief-v11';
 import {trackingRows} from './tracking-language.mjs';
 const rows=[
+['拖动旋转，左键轻触皮肤逐渐泛红变紫。调低青紫程度可淡回原色。','拖動旋轉，左鍵輕觸皮膚逐漸泛紅變紫。調低青紫程度可淡回原色。','ドラッグで回転。クリックした肌がゆっくり赤紫に変化します。青紫の濃さを下げると元の色に戻ります。','Drag to rotate. Click the skin to gradually build red-purple marks. Lower blue-violet intensity to fade them.'],
+['拖动旋转肉体，左键轻触皮肤逐渐泛红变紫','拖動旋轉肉體，左鍵輕觸皮膚逐漸泛紅變紫','ドラッグで回転、クリックで肌に赤紫の跡をつける','Drag to rotate the body, click its skin to gradually bruise it'],
 ['青紫程度','青紫程度','青紫の濃さ','Blue-violet intensity'],
 ['出汗程度','出汗程度','汗の量','Sweat amount'],
 ['‹ 半身','‹ 半身','‹ 半身','‹ Half-body'],
@@ -65,3 +67,4 @@ document.querySelectorAll('[data-lang]').forEach(button=>button.onclick=async()=
  update(document.body);document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
  for(const e of areas){e.getAnimations().forEach(a=>a.cancel());if(!reduce)e.animate([{opacity:0},{opacity:1}],{duration:190})}
 });
+

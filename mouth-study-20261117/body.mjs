@@ -6,6 +6,7 @@ import {SculptureMotion} from './motion-controls.mjs?v=motion-pr-v1';
 import {mouthArticulation,DEFAULT_MOUTH_EXPRESSION} from './mouth-expression.mjs?v=expression-light-v1';
 
 export const DEFAULT_LIP_TINT=.5;
+const BRUISE_CAPACITY=24;
 
 const vertexPrelude = `
 uniform float bodyTime, breath, curl, shiver, movement, pressure, pressAge, halfSide, separation, audioHigh, audioLow;
@@ -71,24 +72,33 @@ export function createBody(host, onReady, onError) {
  scene.add(group);
  const floor=new T.Mesh(new T.PlaneGeometry(45,45),new T.MeshStandardMaterial({color:'#e4e3df',roughness:.86}));
  floor.rotation.x=-Math.PI/2;floor.position.y=-.12;floor.receiveShadow=true;scene.add(floor);
- // A warm side key sculpts volume; a cooler back rim separates the silhouette.
- const ambient=new T.HemisphereLight('#f8ebe0','#31394b',.52);scene.add(ambient);
- const key=new T.DirectionalLight('#ffe6d0',2.7);key.position.set(-4.8,5.8,3.8);key.target.position.set(0,1,0);scene.add(key.target);key.castShadow=true;
- key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.5,far:18});key.shadow.bias=-.00006;key.shadow.normalBias=.04;key.shadow.radius=3;scene.add(key);
- const fill=new T.DirectionalLight('#c4d5ee',.38);fill.position.set(4,1.7,4);scene.add(fill);
- const rim=new T.DirectionalLight('#bdd2ff',1.45);rim.position.set(3.8,3.8,-4.5);rim.target.position.set(0,1,0);scene.add(rim.target,rim);
- const studio=new T.Scene();studio.background=new T.Color('#565450');
- for(const [x,y,z,w,h,strength] of [[-4,4,3,4,6,2.1],[4,1,3,3,5,.55],[2,4,-4,4,6,1.6]]){
+ // Broad studio cards and balanced fill give the initial light a softbox falloff.
+ const ambient=new T.HemisphereLight('#fff4eb','#c4b7b0',1.15);scene.add(ambient);
+ const key=new T.DirectionalLight('#fff1e7',.65);key.position.set(-4.8,5.8,3.8);key.target.position.set(0,1,0);scene.add(key.target);key.castShadow=true;
+ key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.5,far:18});key.shadow.bias=-.00006;key.shadow.normalBias=.04;key.shadow.radius=8;scene.add(key);
+ const fill=new T.DirectionalLight('#f0e9e3',.75);fill.position.set(4,1.7,4);scene.add(fill);
+ const rim=new T.DirectionalLight('#dce4ef',.18);rim.position.set(3.8,3.8,-4.5);rim.target.position.set(0,1,0);scene.add(rim.target,rim);
+ const studio=new T.Scene();studio.background=new T.Color('#aaa39c');
+ for(const [x,y,z,w,h,strength] of [[-3,5,5,9,7,1.5],[4,2,4,8,7,1.1],[0,6,-2,9,6,1.2]]){
   const card=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:new T.Color('white').multiplyScalar(strength),side:T.DoubleSide}));
   card.position.set(x,y,z);card.lookAt(0,0,0);studio.add(card);
  }
- const pmrem=new T.PMREMGenerator(renderer),environment=pmrem.fromScene(studio,.05);
- scene.environment=environment.texture;scene.environmentIntensity=.34;pmrem.dispose();studio.traverse(o=>{o.geometry?.dispose();o.material?.dispose()});
- const parameters={breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:1,bruise:3,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:1};
+ const pmrem=new T.PMREMGenerator(renderer),environment=pmrem.fromScene(studio,.12);
+ scene.environment=environment.texture;scene.environmentIntensity=.85;pmrem.dispose();studio.traverse(o=>{o.geometry?.dispose();o.material?.dispose()});
+ const parameters={breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:1,bruise:1,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:.5};
  const targets={...parameters};
  const voiceTarget={high:0,low:0};
  const motionController=new SculptureMotion(),speechMotion={pace:0,activity:0};
- const uniforms={bodyTime:{value:0},breath:{value:1},curl:{value:0},stretch:{value:0},shiver:{value:0},movement:{value:.45},pressure:{value:0},pressAge:{value:99},pressPoint:{value:new T.Vector3(0,.2,1)},photo:{value:null},framework:{value:null},hasFramework:{value:0},frameAlpha:{value:0},hasPhoto:{value:0},joinAmount:{value:0},hairBend:{value:new T.Vector2()},skinBruise:{value:3},skinSweat:{value:1},halfSide:{value:0},separation:{value:0},skinTint:{value:new T.Color('#fff4ee')},audioHigh:{value:0},audioLow:{value:0}};
+ const uniforms={bodyTime:{value:0},breath:{value:1},curl:{value:0},stretch:{value:0},shiver:{value:0},movement:{value:.45},pressure:{value:0},pressAge:{value:99},pressPoint:{value:new T.Vector3(0,.2,1)},photo:{value:null},framework:{value:null},hasFramework:{value:0},frameAlpha:{value:0},hasPhoto:{value:0},joinAmount:{value:0},hairBend:{value:new T.Vector2()},skinBruise:{value:1},skinSweat:{value:1},halfSide:{value:0},separation:{value:0},skinTint:{value:new T.Color('#fff4ee')},audioHigh:{value:0},audioLow:{value:0}};
+ const bruiseMarks=Array.from({length:BRUISE_CAPACITY},()=>new T.Vector4());
+ const bruiseTargets=new Float32Array(BRUISE_CAPACITY);
+ let nextBruise=0;
+ uniforms.skinBruises={value:bruiseMarks};
+ function bruiseAt(point){
+  let index=bruiseMarks.findIndex((mark,i)=>bruiseTargets[i]>0 && Math.hypot(mark.x-point.x,mark.y-point.y,mark.z-point.z)<.16);
+  if(index<0){index=nextBruise;nextBruise=(nextBruise+1)%BRUISE_CAPACITY;bruiseMarks[index].set(point.x,point.y,point.z,0);bruiseTargets[index]=0}
+  bruiseTargets[index]=Math.min(1,bruiseTargets[index]+.45);
+ }
  const material=new T.MeshPhysicalMaterial({color:'#fff4ee',roughness:.35,metalness:0,clearcoat:.7,clearcoatRoughness:.2,sheen:.26,sheenColor:new T.Color('#b96a60'),sheenRoughness:.7});
  const profileTexture=new T.DataTexture(new Uint8Array(MOUTH_SAMPLES*4),MOUTH_SAMPLES,1,T.RGBAFormat);
  profileTexture.minFilter=profileTexture.magFilter=T.LinearFilter;profileTexture.needsUpdate=true;
@@ -117,7 +127,7 @@ export function createBody(host, onReady, onError) {
  }
  function skinShader(shader){
   deformShader(shader,true);
-  shader.fragmentShader='uniform sampler2D photo, framework; uniform vec3 skinTint; uniform float hasPhoto, joinAmount, skinBruise, skinSweat, hasFramework, frameAlpha, lipTint;\n'+shader.fragmentShader;
+  shader.fragmentShader=`uniform vec4 skinBruises[${BRUISE_CAPACITY}];\n`+'uniform sampler2D photo, framework; uniform vec3 skinTint; uniform float hasPhoto, joinAmount, skinBruise, skinSweat, hasFramework, frameAlpha, lipTint;\n'+shader.fragmentShader;
   shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`
    vec2 skinUV=skinPosition.xy*.5+.5;
    vec4 ai=texture2D(map,skinUV);
@@ -126,7 +136,17 @@ export function createBody(host, onReady, onError) {
    float coolPatch=smoothstep(.37,.70,broad.b/max(broad.r,.001));
    vec3 warmDetail=vec3(.68,.36,.25)*ai.rgb/max(broad,vec3(.001));
    vec3 neutral=mix(ai.rgb,warmDetail,coolPatch);
-   ai.rgb=clamp(ai.rgb+(skinBruise-1.)*(ai.rgb-neutral),.015,1.);
+   ai.rgb=neutral;
+   float bruiseCoverage=0.;
+   for(int i=0;i<${BRUISE_CAPACITY};i++){
+    vec3 delta=skinPosition-skinBruises[i].xyz;
+    float irregularity=1.+.14*sin(skinPosition.x*43.+skinPosition.y*31.)*sin(skinPosition.z*37.-skinPosition.y*27.);
+    float patch=exp(-dot(delta,delta)*62.*irregularity);
+    bruiseCoverage+=patch*skinBruises[i].w;
+   }
+   float bruiseAmount=clamp(bruiseCoverage*skinBruise,0.,1.);
+   vec3 bruiseTint=mix(vec3(.84,.52,.49),vec3(.43,.27,.57),smoothstep(.12,.85,bruiseAmount));
+   ai.rgb*=mix(vec3(1.),bruiseTint,bruiseAmount*.86);
    ai.rgb=mix(ai.rgb,vec3(dot(ai.rgb,vec3(.21,.72,.07))),.16);
    float mottling=sin(skinPosition.x*6.+skinPosition.z*2.)*sin(skinPosition.y*6.-skinPosition.z*3.);
    ai.rgb*=mix(vec3(.99,.97,.98),vec3(1.01,.95,.94),mottling*.5+.5);
@@ -219,18 +239,49 @@ export function createBody(host, onReady, onError) {
  let gestureKind=null,twoDistance=null;
  const hairMotion=new T.Vector2(),hairVelocity=new T.Vector2(),hairTarget=new T.Vector2();
  let lastRX=0,lastRY=0;
- const raycaster=new T.Raycaster(),ndc=new T.Vector2();
- const originalBounds=new T.Sphere(new T.Vector3(0,.9,0),2.8);
- geometry.boundingSphere=originalBounds;
- const hitPlane=new T.Plane(new T.Vector3(0,0,1),0),hit=new T.Vector3();
- function touch(x,y){
-  const r=renderer.domElement.getBoundingClientRect();ndc.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);
-  raycaster.setFromCamera(ndc,camera);
-  if(raycaster.ray.intersectPlane(hitPlane,hit)){
-   group.worldToLocal(hit);uniforms.pressPoint.value.set(T.MathUtils.clamp(hit.x/2,-.8,.8),T.MathUtils.clamp((hit.y-.94),-.65,.8),.8);
-  }pressClock=0;desiredPressure=1;
+ geometry.boundingSphere=new T.Sphere(new T.Vector3(0,.9,0),2.8);
+ // Read the undeformed skin coordinate from the same vertex shader as the visible mesh.
+ // This keeps a bruise attached to the clicked surface during rotation and deformation.
+ const pickScene=new T.Scene(),pickCamera=camera.clone();
+ const pickTarget=new T.WebGLRenderTarget(1,1,{minFilter:T.NearestFilter,magFilter:T.NearestFilter});
+ const pickPixel=new Uint8Array(4),previousClearColor=new T.Color();
+ function pickMaterial(halfSide){
+  return new T.ShaderMaterial({
+   uniforms:{...uniforms,halfSide},toneMapped:false,
+   vertexShader:vertexPrelude+`void main(){skinPosition=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(flesh(position),1.);}`,
+   fragmentShader:`varying vec3 skinPosition;uniform float halfSide;
+    void main(){
+     if(halfSide>.5 && skinPosition.x<0.)discard;
+     if(halfSide<-.5 && skinPosition.x>=0.)discard;
+     gl_FragColor=vec4(skinPosition*.5+.5,1.);
+    }`
+  });
  }
- const dom=renderer.domElement;dom.tabIndex=0;dom.setAttribute('aria-label','拖动旋转肉体，轻触施压');
+ const pickBody=new T.Mesh(geometry,pickMaterial(uniforms.halfSide));
+ const pickPhoto=new T.Mesh(geometry,pickMaterial(photoSide));
+ pickBody.matrixAutoUpdate=pickPhoto.matrixAutoUpdate=false;pickScene.add(pickBody,pickPhoto);
+ function touch(x,y){
+  const bounds=renderer.domElement.getBoundingClientRect();
+  if(x<bounds.left||x>=bounds.right||y<bounds.top||y>=bounds.bottom)return;
+  const view=camera.view;
+  const fullWidth=view?.enabled?view.fullWidth:bounds.width,fullHeight=view?.enabled?view.fullHeight:bounds.height;
+  const width=view?.enabled?view.width:bounds.width,height=view?.enabled?view.height:bounds.height;
+  pickCamera.copy(camera);
+  pickCamera.setViewOffset(fullWidth,fullHeight,(view?.enabled?view.offsetX:0)+(x-bounds.left)/bounds.width*width,(view?.enabled?view.offsetY:0)+(y-bounds.top)/bounds.height*height,width/bounds.width,height/bounds.height);
+  scene.updateMatrixWorld(true);
+  pickBody.matrix.copy(body.matrixWorld);pickPhoto.matrix.copy(photoHalf.matrixWorld);pickPhoto.visible=photoHalf.visible;
+  const previousTarget=renderer.getRenderTarget(),previousAlpha=renderer.getClearAlpha();renderer.getClearColor(previousClearColor);
+  try{
+   renderer.setRenderTarget(pickTarget);renderer.setClearColor(0,0);renderer.clear();renderer.render(pickScene,pickCamera);
+   renderer.readRenderTargetPixels(pickTarget,0,0,1,1,pickPixel);
+  }finally{renderer.setRenderTarget(previousTarget);renderer.setClearColor(previousClearColor,previousAlpha)}
+  if(!pickPixel[3])return;
+  const point=new T.Vector3(pickPixel[0]/255*2-1,pickPixel[1]/255*2-1,pickPixel[2]/255*2-1);
+  // The photographed half retains its captured colour and texture.
+  if(photoHalf.visible&&point.x>=0)return;
+  uniforms.pressPoint.value.copy(point);bruiseAt(point);pressClock=0;desiredPressure=1;
+ }
+ const dom=renderer.domElement;dom.tabIndex=0;dom.setAttribute('aria-label','拖动旋转肉体，左键轻触皮肤逐渐泛红变紫');
  dom.onpointerdown=e=>{if(!e.isPrimary||e.button!==0)return;pointer={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,id:e.pointerId};moved=false;dom.setPointerCapture(e.pointerId)};
  dom.onpointermove=e=>{
   if(pointer?.id!==e.pointerId)return;
@@ -253,7 +304,7 @@ export function createBody(host, onReady, onError) {
   pointer=null;
  };
  dom.onpointercancel=dom.onlostpointercapture=e=>{if(pointer?.id===e.pointerId)pointer=null};
- dom.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pressClock=0;desiredPressure=1}};
+ dom.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();bruiseAt(uniforms.pressPoint.value);pressClock=0;desiredPressure=1}};
  function resize(){
   const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;
   if(w<700){const distance=4.7/(2*Math.tan(T.MathUtils.degToRad(15.5))*camera.aspect);scene.fog.near=distance*1.05;scene.fog.far=distance*1.8;camera.position.set(0,distance*.36,distance);camera.lookAt(0,.8,0);camera.setViewOffset(w,h,0,h*.08,w,h)}
@@ -348,12 +399,14 @@ export function createBody(host, onReady, onError) {
   desiredPressure*=Math.exp(-dt*2.4);pressure+=(desiredPressure-pressure)*(1-Math.exp(-dt*12));
   for(const key in parameters)parameters[key]+=(targets[key]-parameters[key])*(1-Math.exp(-dt*4));
   for(const key of ['breath','curl','stretch','shiver','movement'])uniforms[key].value=parameters[key];
+  for(let i=0;i<BRUISE_CAPACITY;i++)bruiseMarks[i].w+=(bruiseTargets[i]-bruiseMarks[i].w)*(1-Math.exp(-dt*.85));
   uniforms.skinBruise.value=parameters.bruise;uniforms.skinSweat.value=parameters.sweat;uniforms.bodyTime.value=time;uniforms.pressAge.value=pressClock;uniforms.pressure.value=pressure;
   uniforms.lipTint.value=parameters.lipTint;
   uniforms.mouthExpression.value=parameters.mouthExpression;
   const lightContrast=T.MathUtils.clamp(parameters.lightingContrast,.5,1.5);
-  ambient.intensity=.52/Math.pow(lightContrast,.8);fill.intensity=.38/lightContrast;
-  key.intensity=2.7*(.85+.15*lightContrast);rim.intensity=1.45*(.8+.2*lightContrast);scene.environmentIntensity=.34/Math.sqrt(lightContrast);
+  const lightingShape=lightContrast-.5;
+  ambient.intensity=1.15-lightingShape*.65;fill.intensity=.75-lightingShape*.45;
+  key.intensity=.65+lightingShape*1.55;rim.intensity=.18+lightingShape*.7;scene.environmentIntensity=.85-lightingShape*.5;
   if(!paused)for(const [key,field] of [['high','audioHigh'],['low','audioLow']]){
    const current=uniforms[field].value,target=voiceTarget[key];
    const seconds=target>current?(key==='high'?.065:.14):.32;
@@ -450,7 +503,7 @@ export function createBody(host, onReady, onError) {
   setPhoto(canvas,frame=null){clearMouth();const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());photoTexture?.dispose();photoTexture=texture;uniforms.photo.value=texture;uniforms.hasPhoto.value=1;uniforms.joinAmount.value=0;photoBlend=1;frameTexture?.dispose();frameTexture=frame?new T.CanvasTexture(frame):null;if(frameTexture)frameTexture.colorSpace=T.SRGBColorSpace;uniforms.framework.value=frameTexture||skin;uniforms.hasFramework.value=frameTexture?1:0;fusionTime=0;uniforms.halfSide.value=-1;photoHalf.visible=true;paused=false},
   replayFusion(){if(photoBlend){fusionTime=0;paused=false}},
   clearPhoto(){clearMouth();frameTexture?.dispose();frameTexture=null;uniforms.hasFramework.value=0;uniforms.framework.value=skin;photoHalf.visible=false;uniforms.halfSide.value=0;uniforms.separation.value=0;fusionTime=7.2;photoBlend=0;uniforms.hasPhoto.value=0;uniforms.photo.value=skin;photoTexture?.dispose();photoTexture=null},
-  reset(){Object.assign(targets,{breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:1,bruise:3,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:1});rotateX=0;rotateY=-.08;gestureKind=null;twoDistance=null;paused=false},
+  reset(){bruiseTargets.fill(0);Object.assign(targets,{breath:1,curl:0,stretch:0,shiver:0,movement:.45,wet:.65,size:1,relief:1,bruise:1,sweat:1,lipTint:DEFAULT_LIP_TINT,mouthExpression:DEFAULT_MOUTH_EXPRESSION,lightingContrast:.5});rotateX=0;rotateY=-.08;gestureKind=null;twoDistance=null;paused=false},
   capture(){
    const copy=document.createElement('canvas');copy.width=dom.width;copy.height=dom.height;
    copyTransparentFrame(copy.getContext('2d'));
@@ -459,6 +512,7 @@ export function createBody(host, onReady, onError) {
   copyTransparentFrame,
   get canvas(){return dom},
   onTick(callback){tick=callback},
-  dispose(){dead=true;removeEventListener('resize',resize);geometry.dispose();material.dispose();depth.dispose();photoDepth.dispose();frameTexture?.dispose();photoTexture?.dispose();profileTexture.dispose();skin.dispose();surfaceMaps.forEach(texture=>texture.dispose());environment.dispose();scene.traverse(o=>{if(o!==body){o.geometry?.dispose();o.material?.dispose()}});renderer.dispose();dom.remove()}
+  dispose(){pickTarget.dispose();pickBody.material.dispose();pickPhoto.material.dispose();dead=true;removeEventListener('resize',resize);geometry.dispose();material.dispose();depth.dispose();photoDepth.dispose();frameTexture?.dispose();photoTexture?.dispose();profileTexture.dispose();skin.dispose();surfaceMaps.forEach(texture=>texture.dispose());environment.dispose();scene.traverse(o=>{if(o!==body){o.geometry?.dispose();o.material?.dispose()}});renderer.dispose();dom.remove()}
  };
 }
+
